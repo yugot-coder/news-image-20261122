@@ -2,8 +2,10 @@
 """news-image-20261122 — 'THE DAILY ORBIT': Sunday 22 November 2026 in one image.
 
 Dense broadsheet-style news poster drawn with Pillow. Fully deterministic:
-no randomness, no timestamps, no network. Output: /output/entry.png when
-/output exists, otherwise entry.png next to this file. 1024x1024, < 1 MiB.
+no randomness, no timestamps, no network. Fonts are bundled in fonts/
+next to this file. Output: $MAKEFUN_OUTPUT_DIR/entry.png when that
+variable is set, else /output/entry.png when /output exists, otherwise
+entry.png next to this file. 1024x1024, < 1 MiB.
 """
 import os
 from PIL import Image, ImageDraw, ImageFont
@@ -24,22 +26,34 @@ NAVY = (24, 42, 74)
 GREEN = (22, 92, 54)
 GOLD = (146, 108, 20)
 
-FD = "/usr/share/fonts/truetype/noto/"
-SERIF_BLACK = FD + "NotoSerifDisplay-Black.ttf"
-SERIF_XB = FD + "NotoSerifDisplay-ExtraBold.ttf"
-SERIF_B = FD + "NotoSerifDisplay-Bold.ttf"
-SANS_CB = FD + "NotoSans-CondensedBold.ttf"
-SANS_CSB = FD + "NotoSans-CondensedSemiBold.ttf"
-SANS_CM = FD + "NotoSans-CondensedMedium.ttf"
-SANS_C = FD + "NotoSans-Condensed.ttf"
+HERE = os.path.dirname(os.path.abspath(__file__))
+# Font resolution order: the fonts/ directory bundled next to this file
+# first (the grader image has no system Noto fonts), then the system
+# font directory, then Pillow's built-in default as a last resort.
+FONT_DIRS = (os.path.join(HERE, "fonts"), "/usr/share/fonts/truetype/noto")
+SERIF_BLACK = "NotoSerifDisplay-Black.ttf"
+SERIF_XB = "NotoSerifDisplay-ExtraBold.ttf"
+SERIF_B = "NotoSerifDisplay-Bold.ttf"
+SANS_CB = "NotoSans-CondensedBold.ttf"
+SANS_CSB = "NotoSans-CondensedSemiBold.ttf"
+SANS_CM = "NotoSans-CondensedMedium.ttf"
+SANS_C = "NotoSans-Condensed.ttf"
 
 _cache = {}
 
 
-def F(path, size):
-    key = (path, size)
+def F(name, size):
+    key = (name, size)
     if key not in _cache:
-        _cache[key] = ImageFont.truetype(path, size)
+        font = None
+        for d in FONT_DIRS:
+            p = os.path.join(d, name)
+            if os.path.isfile(p):
+                font = ImageFont.truetype(p, size)
+                break
+        if font is None:
+            font = ImageFont.load_default()
+        _cache[key] = font
     return _cache[key]
 
 
@@ -467,8 +481,8 @@ def main():
     y = heroes(d, y)
     y = cards(d, y)
     bottom_band(d, y)
-    out_dir = "/output" if os.path.isdir("/output") else os.path.dirname(
-        os.path.abspath(__file__))
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or (
+        "/output" if os.path.isdir("/output") else HERE)
     out = os.path.join(out_dir, "entry.png")
     img.save(out, "PNG", optimize=True)
     print("wrote", out, os.path.getsize(out), "bytes")
