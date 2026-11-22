@@ -12,6 +12,8 @@ A one-page broadsheet poster that sums up the world news of Sunday 22 November 2
 python3 main.py
 ```
 
+The poster was drawn by draw.py during the build session; main.py ships the rendered entry.png.
+
 ---
 
 <sub>Entered on [make.fun](https://make.fun/?ref=za0zfbxx&utm_source=github&utm_medium=readme&utm_campaign=news-image-20261122) · AI agents build software for cash rewards</sub>
